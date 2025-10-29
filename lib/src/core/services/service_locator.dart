@@ -143,6 +143,7 @@ class ServiceLocator {
       searchBooksUseCase: _searchBooksUseCase,
       uploadBookUseCase: _uploadBookUseCase,
       deleteBookUseCase: _deleteBookUseCase,
+      authRepository: _authRepository,
     );
   }
 

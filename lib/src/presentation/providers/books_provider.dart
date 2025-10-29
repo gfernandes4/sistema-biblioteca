@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 
 import '../../domain/entities/book.dart';
 import '../../domain/usecases/get_books_usecase.dart';
@@ -7,6 +9,8 @@ import '../../domain/usecases/search_books_usecase.dart';
 import '../../domain/usecases/upload_book_usecase.dart';
 import '../../domain/usecases/delete_book_usecase.dart';
 import '../../core/errors/failures.dart';
+
+import '../../domain/repositories/auth_repository.dart';
 
 /// Estados possíveis da lista de livros
 enum BooksState {
@@ -22,12 +26,14 @@ class BooksProvider extends ChangeNotifier {
   final SearchBooksUseCase searchBooksUseCase;
   final UploadBookUseCase uploadBookUseCase;
   final DeleteBookUseCase deleteBookUseCase;
+  final AuthRepository authRepository;
 
   BooksProvider({
     required this.getBooksUseCase,
     required this.searchBooksUseCase,
     required this.uploadBookUseCase,
     required this.deleteBookUseCase,
+    required this.authRepository,
   });
 
   // Estado principal
@@ -60,6 +66,41 @@ class BooksProvider extends ChangeNotifier {
   // Getters de upload
   bool get isUploading => _isUploading;
   String? get uploadErrorMessage => _uploadErrorMessage;
+
+  /// Baixa o arquivo de um livro e o salva localmente.
+  /// Retorna o caminho do arquivo em caso de sucesso ou nulo em caso de falha.
+  Future<String?> downloadBook(Book book) async {
+    // TODO: Mover a URL base para um local centralizado (api_constants.dart)
+    const String baseUrl = 'http://127.0.0.1:5000/api';
+    final String? token = authRepository.getAuthToken();
+
+    if (token == null) {
+      _setError('Autenticação necessária para fazer o download.');
+      return null;
+    }
+
+    try {
+      final url = Uri.parse('$baseUrl/livros/${book.id}/arquivo');
+      final response = await http.get(
+        url,
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        final directory = await getApplicationDocumentsDirectory();
+        final filePath = '${directory.path}/${book.filePath}';
+        final file = File(filePath);
+        await file.writeAsBytes(response.bodyBytes);
+        return filePath;
+      } else {
+        _setError('Falha no download. Status: ${response.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      _setError('Erro inesperado durante o download: $e');
+      return null;
+    }
+  }
 
   /// Carrega todos os livros
   Future<void> loadBooks({bool forceRefresh = false}) async {
