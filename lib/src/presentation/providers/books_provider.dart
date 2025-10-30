@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 
+import '../../core/constants/api_constants.dart';
 import '../../domain/entities/book.dart';
 import '../../domain/usecases/get_books_usecase.dart';
 import '../../domain/usecases/search_books_usecase.dart';
@@ -68,19 +69,18 @@ class BooksProvider extends ChangeNotifier {
   String? get uploadErrorMessage => _uploadErrorMessage;
 
   /// Baixa o arquivo de um livro e o salva localmente.
-  /// Retorna o caminho do arquivo em caso de sucesso ou nulo em caso de falha.
-  Future<String?> downloadBook(Book book) async {
-    // TODO: Mover a URL base para um local centralizado (api_constants.dart)
-    const String baseUrl = 'http://127.0.0.1:5000/api';
+  /// Retorna o caminho do arquivo em caso de sucesso.
+  /// Lança uma exceção [Failure] em caso de erro.
+  Future<String> downloadBook(Book book) async {
     final String? token = authRepository.getAuthToken();
 
     if (token == null) {
-      _setError('Autenticação necessária para fazer o download.');
-      return null;
+      throw const UnauthorizedFailure(message: 'Autenticação necessária para fazer o download.');
     }
 
     try {
-      final url = Uri.parse('$baseUrl/livros/${book.id}/arquivo');
+      // TODO: O endpoint de arquivo deveria vir de ApiConstants
+      final url = Uri.parse('${ApiConstants.baseUrl}/livros/${book.id}/arquivo');
       final response = await http.get(
         url,
         headers: {'Authorization': 'Bearer $token'},
@@ -88,17 +88,21 @@ class BooksProvider extends ChangeNotifier {
 
       if (response.statusCode == 200) {
         final directory = await getApplicationDocumentsDirectory();
-        final filePath = '${directory.path}/${book.filePath}';
+        // Garante que o nome do arquivo seja seguro
+        final fileName = book.filePath.split(Platform.pathSeparator).last;
+        final filePath = '${directory.path}${Platform.pathSeparator}$fileName';
+        
         final file = File(filePath);
         await file.writeAsBytes(response.bodyBytes);
         return filePath;
       } else {
-        _setError('Falha no download. Status: ${response.statusCode}');
-        return null;
+        throw NetworkFailure(message: 'Falha no download. Status: ${response.statusCode}');
       }
     } catch (e) {
-      _setError('Erro inesperado durante o download: $e');
-      return null;
+      if (e is Failure) {
+        rethrow;
+      }
+      throw NetworkFailure(message: 'Erro inesperado durante o download: $e');
     }
   }
 

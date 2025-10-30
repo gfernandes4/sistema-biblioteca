@@ -9,6 +9,8 @@ import '../../data/datasources/books_remote_datasource.dart';
 import '../../data/datasources/books_local_datasource.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../data/repositories/books_repository_impl.dart';
+import '../../domain/repositories/auth_repository.dart';
+import '../../domain/repositories/books_repository.dart';
 import '../../domain/usecases/login_usecase.dart';
 import '../../domain/usecases/logout_usecase.dart';
 import '../../domain/usecases/get_books_usecase.dart';

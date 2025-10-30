@@ -1,5 +1,5 @@
 import '../entities/user.dart';
-import '../../data/repositories/auth_repository_impl.dart';
+import '../repositories/auth_repository.dart';
 import '../../core/errors/failures.dart';
 
 /// Use case para fazer login

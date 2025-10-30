@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
 
@@ -140,6 +141,36 @@ class ApiService {
     } catch (e) {
       _logger.e('Erro no upload: $e');
       throw BookUploadFailure(message: 'Erro no upload: $e');
+    }
+  }
+
+  /// Realiza o download de um arquivo e retorna os bytes
+  Future<Uint8List> downloadBytes(String endpoint) async {
+    try {
+      final uri = _buildUri(endpoint);
+      _logger.d('DOWNLOAD: $uri');
+
+      final response = await _client.get(uri, headers: _headers);
+      
+      if (response.statusCode == 200) {
+        return response.bodyBytes;
+      } else {
+        // Try to decode error message, but throw a generic failure if it fails
+        try {
+          _handleResponse(response); // This will throw the appropriate failure
+          // Should not be reached if _handleResponse throws
+          throw ServerFailure(message: 'Falha no download', code: response.statusCode);
+        } catch (e) {
+          if (e is Failure) rethrow;
+          throw ServerFailure(message: 'Falha no download', code: response.statusCode);
+        }
+      }
+    } on SocketException {
+      throw const NetworkFailure(message: 'Sem conexão com a internet');
+    } catch (e) {
+      _logger.e('Erro no download: $e');
+      if (e is Failure) rethrow;
+      throw NetworkFailure(message: 'Erro no download: $e');
     }
   }
 
