@@ -1,4 +1,4 @@
-import '../../data/repositories/auth_repository_impl.dart';
+import '../repositories/auth_repository.dart';
 
 /// Use case para fazer logout
 class LogoutUseCase {

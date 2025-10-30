@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./projeto-biblioteca-backend
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      # Mapeia a pasta de uploads local para a pasta dentro do contêiner
+      - ./projeto-biblioteca-backend/uploads:/app/uploads
+      # Mapeia a pasta de instância (banco de dados SQLite) local para a pasta no contêiner
+      - ./projeto-biblioteca-backend/instance:/app/instance
+    environment:
+      # Garante que o Flask use o modo de desenvolvimento e recarregue em mudanças.
+      # Para produção, isso seria removido.
+      - FLASK_ENV=development

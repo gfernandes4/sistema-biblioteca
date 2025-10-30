@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/usecases/login_usecase.dart';
 import '../../domain/usecases/logout_usecase.dart';
-import '../../data/repositories/auth_repository_impl.dart';
+import '../../domain/repositories/auth_repository.dart';
 import '../../core/errors/failures.dart';
 
 /// Provider para gerenciar estado de autenticação
@@ -42,6 +42,7 @@ class AuthProvider extends ChangeNotifier {
       final user = await loginUseCase(email: email, password: password);
       _currentUser = user;
       _setLoading(false);
+      notifyListeners(); // Notifica para atualizar a UI
       return true;
     } catch (e) {
       _setError(_getErrorMessage(e));
@@ -67,18 +68,29 @@ class AuthProvider extends ChangeNotifier {
 
   /// Verifica se usuário pode gerenciar livros (Admin ou Escola)
   bool get canManageBooks {
-    final userType = currentUserType;
-    return userType == 'admin' || userType == 'school';
+    final userType = currentUserType?.toLowerCase();
+    return userType == 'admin' || 
+           userType == 'escola' || 
+           userType == 'school';
   }
 
   /// Verifica se usuário é admin
-  bool get isAdmin => currentUserType == 'admin';
+  bool get isAdmin {
+    final userType = currentUserType?.toLowerCase();
+    return userType == 'admin';
+  }
 
   /// Verifica se usuário é escola
-  bool get isSchool => currentUserType == 'school';
+  bool get isSchool {
+    final userType = currentUserType?.toLowerCase();
+    return userType == 'escola' || userType == 'school';
+  }
 
   /// Verifica se usuário é aluno
-  bool get isStudent => currentUserType == 'student';
+  bool get isStudent {
+    final userType = currentUserType?.toLowerCase();
+    return userType == 'student' || userType == 'aluno';
+  }
 
   /// Define estado de carregamento
   void _setLoading(bool loading) {

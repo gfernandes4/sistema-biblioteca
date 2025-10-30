@@ -1,19 +1,11 @@
 import 'dart:io';
 
-import '../../domain/entities/book.dart';
 import '../../core/errors/failures.dart';
-import '../datasources/books_remote_datasource.dart';
+import '../../domain/entities/book.dart';
+import '../../domain/repositories/books_repository.dart';
 import '../datasources/books_local_datasource.dart';
+import '../datasources/books_remote_datasource.dart';
 
-/// Interface do repositório de livros
-abstract class BooksRepository {
-  Future<List<Book>> getAllBooks({bool forceRefresh = false});
-  Future<Book> getBookById(String id);
-  Future<List<Book>> searchBooks(String query);
-  Future<Book> uploadBook(File file, Map<String, String> bookData);
-  Future<void> deleteBook(String id);
-  Future<void> refreshCache();
-}
 
 /// Implementação do repositório de livros
 class BooksRepositoryImpl implements BooksRepository {

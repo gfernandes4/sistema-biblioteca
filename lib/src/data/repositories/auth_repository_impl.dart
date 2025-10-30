@@ -1,18 +1,10 @@
 import 'package:jwt_decoder/jwt_decoder.dart';
 
-import '../../domain/entities/user.dart';
 import '../../core/errors/failures.dart';
 import '../../core/services/storage_service.dart';
+import '../../domain/entities/user.dart';
+import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_remote_datasource.dart';
-
-/// Interface do repositório de autenticação
-abstract class AuthRepository {
-  Future<User> login(String email, String password);
-  Future<void> logout();
-  bool get isLoggedIn;
-  String? get currentUserType;
-  String? get currentUserId;
-}
 
 /// Implementação do repositório de autenticação
 class AuthRepositoryImpl implements AuthRepository {
@@ -30,6 +22,9 @@ class AuthRepositoryImpl implements AuthRepository {
       // Fazer login via API
       final token = await remoteDataSource.login(email, password);
       
+      // 🔥 IMPORTANTE: Salvar o token no StorageService
+      await storageService.saveAuthToken(token);
+      
       // Decodificar o token para obter os dados do usuário
       final Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
       final String userId = decodedToken['id'].toString();
@@ -38,8 +33,6 @@ class AuthRepositoryImpl implements AuthRepository {
       // Salvar dados do usuário localmente
       await storageService.saveUserId(userId);
       await storageService.saveUserType(userRole);
-      
-      // Nota: O token já foi salvo pelo ApiService durante o login
       
       return User(id: userId, type: UserTypeExtension.fromString(userRole));
     } catch (e) {
@@ -73,4 +66,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   String? get currentUserId => storageService.getUserId();
+
+  @override
+  String? getAuthToken() => storageService.getAuthToken();
 }

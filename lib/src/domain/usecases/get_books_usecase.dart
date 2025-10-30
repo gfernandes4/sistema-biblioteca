@@ -1,5 +1,5 @@
 import '../entities/book.dart';
-import '../../data/repositories/books_repository_impl.dart';
+import '../repositories/books_repository.dart';
 
 /// Use case para buscar todos os livros
 class GetBooksUseCase {

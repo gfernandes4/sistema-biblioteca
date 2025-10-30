@@ -192,12 +192,18 @@ class _LoginScreenState extends State<LoginScreen> {
     );
 
     if (success && mounted) {
-      Navigator.of(context).pushReplacementNamed('/home');
+      final userType = authProvider.currentUserType;
+      if (userType == 'admin' || userType == 'escola') {
+        Navigator.of(context).pushReplacementNamed('/admin');
+      } else {
+        Navigator.of(context).pushReplacementNamed('/home');
+      }
     }
   }
 
   void _handleStudentAccess(BuildContext context) {
     // Para acesso de aluno, navegar diretamente para home sem login
-    Navigator.of(context).pushReplacementNamed('/home');
+    // Limpa a pilha de navegação para evitar o botão "voltar" indesejado
+    Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
   }
 }

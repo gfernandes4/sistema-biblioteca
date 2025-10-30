@@ -14,6 +14,7 @@ import 'src/presentation/screens/login_screen.dart';
 import 'src/presentation/screens/home_screen.dart';
 import 'src/presentation/screens/upload_book_screen.dart';
 import 'src/presentation/screens/book_reader_screen.dart';
+import 'src/presentation/screens/admin_dashboard_screen.dart';
 
 /// Ponto de entrada da aplicação
 void main() async {
@@ -96,6 +97,7 @@ class BibliotecaDigitalApp extends StatelessWidget {
     return {
       '/login': (context) => const LoginScreen(),
       '/home': (context) => const HomeScreen(),
+      '/admin': (context) => const AdminDashboardScreen(),
       '/upload-book': (context) => const UploadBookScreen(),
     };
   }
