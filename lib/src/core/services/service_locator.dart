@@ -1,25 +1,29 @@
 import 'package:logger/logger.dart';
 
 import 'api_service.dart';
-// import 'file_service.dart';
 import 'database_service.dart';
 import 'storage_service.dart';
 import '../../data/datasources/auth_remote_datasource.dart';
 import '../../data/datasources/books_remote_datasource.dart';
 import '../../data/datasources/books_local_datasource.dart';
+import '../../data/datasources/school_remote_datasource.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../data/repositories/books_repository_impl.dart';
+import '../../data/repositories/school_repository_impl.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/repositories/books_repository.dart';
+import '../../domain/repositories/school_repository.dart';
 import '../../domain/usecases/login_usecase.dart';
 import '../../domain/usecases/logout_usecase.dart';
 import '../../domain/usecases/get_books_usecase.dart';
 import '../../domain/usecases/search_books_usecase.dart';
 import '../../domain/usecases/upload_book_usecase.dart';
 import '../../domain/usecases/delete_book_usecase.dart';
+import '../../domain/usecases/school_usecases.dart';
 import '../../presentation/providers/auth_provider.dart';
 import '../../presentation/providers/books_provider.dart';
 import '../../presentation/providers/theme_provider.dart';
+import '../../presentation/providers/school_provider.dart';
 
 /// Service Locator para injeção de dependências
 class ServiceLocator {
@@ -27,7 +31,6 @@ class ServiceLocator {
   factory ServiceLocator() => _instance;
   ServiceLocator._internal();
 
-  // Singleton para garantir uma única instância
   static ServiceLocator get instance => _instance;
 
   // Serviços core
@@ -35,16 +38,17 @@ class ServiceLocator {
   late final ApiService _apiService;
   late final DatabaseService _databaseService;
   late final StorageService _storageService;
-  
 
   // Data sources
   late final AuthRemoteDataSource _authRemoteDataSource;
   late final BooksRemoteDataSource _booksRemoteDataSource;
   late final BooksLocalDataSource _booksLocalDataSource;
+  late final SchoolRemoteDataSource _schoolRemoteDataSource;
 
   // Repositories
   late final AuthRepository _authRepository;
   late final BooksRepository _booksRepository;
+  late final SchoolRepository _schoolRepository;
 
   // Use cases
   late final LoginUseCase _loginUseCase;
@@ -53,6 +57,11 @@ class ServiceLocator {
   late final SearchBooksUseCase _searchBooksUseCase;
   late final UploadBookUseCase _uploadBookUseCase;
   late final DeleteBookUseCase _deleteBookUseCase;
+  late final GetSchoolsUseCase _getSchoolsUseCase;
+  late final GetSchoolByIdUseCase _getSchoolByIdUseCase;
+  late final CreateSchoolUseCase _createSchoolUseCase;
+  late final UpdateSchoolUseCase _updateSchoolUseCase;
+  late final DeleteSchoolUseCase _deleteSchoolUseCase;
 
   bool _isInitialized = false;
 
@@ -78,7 +87,6 @@ class ServiceLocator {
     _apiService = ApiService(logger: _logger);
     _databaseService = DatabaseService();
 
-    // Recuperar token salvo
     final savedToken = _storageService.getAuthToken();
     if (savedToken != null) {
       _apiService.setAuthToken(savedToken);
@@ -88,17 +96,18 @@ class ServiceLocator {
     _authRemoteDataSource = AuthRemoteDataSourceImpl(apiService: _apiService);
     _booksRemoteDataSource = BooksRemoteDataSourceImpl(apiService: _apiService);
     _booksLocalDataSource = BooksLocalDataSourceImpl(databaseService: _databaseService);
+    _schoolRemoteDataSource = SchoolRemoteDataSourceImpl(apiService: _apiService);
 
     // Repositories
     _authRepository = AuthRepositoryImpl(
       remoteDataSource: _authRemoteDataSource,
       storageService: _storageService,
     );
-
     _booksRepository = BooksRepositoryImpl(
       remoteDataSource: _booksRemoteDataSource,
       localDataSource: _booksLocalDataSource,
     );
+    _schoolRepository = SchoolRepositoryImpl(remoteDataSource: _schoolRemoteDataSource);
 
     // Use cases
     _loginUseCase = LoginUseCase(authRepository: _authRepository);
@@ -107,6 +116,11 @@ class ServiceLocator {
     _searchBooksUseCase = SearchBooksUseCase(booksRepository: _booksRepository);
     _uploadBookUseCase = UploadBookUseCase(booksRepository: _booksRepository);
     _deleteBookUseCase = DeleteBookUseCase(booksRepository: _booksRepository);
+    _getSchoolsUseCase = GetSchoolsUseCase(repository: _schoolRepository);
+    _getSchoolByIdUseCase = GetSchoolByIdUseCase(repository: _schoolRepository);
+    _createSchoolUseCase = CreateSchoolUseCase(repository: _schoolRepository);
+    _updateSchoolUseCase = UpdateSchoolUseCase(repository: _schoolRepository);
+    _deleteSchoolUseCase = DeleteSchoolUseCase(repository: _schoolRepository);
 
     _isInitialized = true;
     _logger.i('ServiceLocator inicializado com sucesso');
@@ -118,7 +132,6 @@ class ServiceLocator {
   ApiService get apiService => _apiService;
   DatabaseService get databaseService => _databaseService;
   StorageService get storageService => _storageService;
-  // FileService get fileService => _fileService;
 
   AuthRepository get authRepository => _authRepository;
   BooksRepository get booksRepository => _booksRepository;
@@ -146,6 +159,16 @@ class ServiceLocator {
       uploadBookUseCase: _uploadBookUseCase,
       deleteBookUseCase: _deleteBookUseCase,
       authRepository: _authRepository,
+    );
+  }
+
+  SchoolProvider createSchoolProvider() {
+    return SchoolProvider(
+      getSchoolsUseCase: _getSchoolsUseCase,
+      getSchoolByIdUseCase: _getSchoolByIdUseCase,
+      createSchoolUseCase: _createSchoolUseCase,
+      updateSchoolUseCase: _updateSchoolUseCase,
+      deleteSchoolUseCase: _deleteSchoolUseCase,
     );
   }
 

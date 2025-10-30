@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:system_biblioteca/src/presentation/providers/school_provider.dart';
 
 import 'src/core/services/service_locator.dart';
 import 'src/core/utils/app_themes.dart';
@@ -48,6 +49,11 @@ class BibliotecaDigitalApp extends StatelessWidget {
         // Provider para livros
         ChangeNotifierProvider<BooksProvider>(
           create: (_) => ServiceLocator.instance.createBooksProvider(),
+        ),
+
+        // Provider para escolas
+        ChangeNotifierProvider<SchoolProvider>(
+          create: (_) => ServiceLocator.instance.createSchoolProvider(),
         ),
         
         // Provider para tema

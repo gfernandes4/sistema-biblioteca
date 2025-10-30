@@ -32,14 +32,18 @@ class AuthProvider extends ChangeNotifier {
 
   /// Faz login
   Future<bool> login({
-    required String email,
+    required String username,
     required String password,
+    required UserType userType,
   }) async {
     _setLoading(true);
     _clearError();
 
     try {
-      final user = await loginUseCase(email: email, password: password);
+      final user = await loginUseCase(
+        username: username,
+        password: password,
+      );
       _currentUser = user;
       _setLoading(false);
       notifyListeners(); // Notifica para atualizar a UI

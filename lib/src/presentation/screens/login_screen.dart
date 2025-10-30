@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../domain/entities/user.dart'; // Import UserType
 import '../providers/auth_provider.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/custom_button.dart';
@@ -16,13 +17,14 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isAdminLogin = false; // State for the admin switch
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -71,17 +73,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 
                 // Campos de login
                 CustomTextField(
-                  label: 'E-mail',
-                  hint: 'Digite seu e-mail',
-                  controller: _emailController,
+                  label: 'E-mail / Usuário',
+                  hint: 'Digite seu e-mail ou usuário',
+                  controller: _usernameController,
                   keyboardType: TextInputType.emailAddress,
-                  prefixIcon: Icons.email_outlined,
+                  prefixIcon: Icons.person_outline,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'E-mail é obrigatório';
-                    }
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                      return 'E-mail inválido';
+                      return 'Este campo é obrigatório';
                     }
                     return null;
                   },
@@ -105,15 +104,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     if (value == null || value.trim().isEmpty) {
                       return 'Senha é obrigatória';
                     }
-                    if (value.length < 6) {
-                      return 'Senha deve ter pelo menos 6 caracteres';
-                    }
                     return null;
                   },
                 ),
-                
-                const SizedBox(height: 24),
-                
+
+                const SizedBox(height: 8),
+                const SizedBox(height: 8),
+
+                      
                 // Botão de login
                 Consumer<AuthProvider>(
                   builder: (context, authProvider, child) {
@@ -186,14 +184,17 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final authProvider = context.read<AuthProvider>();
+    final userType = _isAdminLogin ? UserType.admin : UserType.school;
+
     final success = await authProvider.login(
-      email: _emailController.text.trim(),
+      username: _usernameController.text.trim(),
       password: _passwordController.text,
+      userType: userType,
     );
 
     if (success && mounted) {
-      final userType = authProvider.currentUserType;
-      if (userType == 'admin' || userType == 'escola') {
+      final loggedInUserType = authProvider.currentUserType;
+      if (loggedInUserType == 'admin' || loggedInUserType == 'escola') {
         Navigator.of(context).pushReplacementNamed('/admin');
       } else {
         Navigator.of(context).pushReplacementNamed('/home');

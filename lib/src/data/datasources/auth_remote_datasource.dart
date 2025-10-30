@@ -1,10 +1,10 @@
 import '../../core/services/api_service.dart';
 import '../../core/constants/api_constants.dart';
-import '../models/user_model.dart';
+import '../../domain/entities/user.dart'; // Import UserType
 
 /// DataSource remoto para autenticação
 abstract class AuthRemoteDataSource {
-  Future<String> login(String email, String password);
+  Future<String> login(String username, String password, UserType userType);
   Future<void> logout();
 }
 
@@ -14,13 +14,22 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   AuthRemoteDataSourceImpl({required this.apiService});
 
   @override
-  Future<String> login(String email, String password) async {
+  Future<String> login(String username, String password, UserType userType) async {
+    String endpoint;
+    Map<String, String> body;
+
+    if (userType == UserType.admin) {
+      endpoint = ApiConstants.loginAdminEndpoint;
+      body = {'usuario': username, 'senha': password};
+    } else {
+      // Assume UserType.school
+      endpoint = ApiConstants.loginEscolaEndpoint;
+      body = {'email': username, 'senha': password};
+    }
+
     final response = await apiService.post(
-      ApiConstants.loginEscolaEndpoint,
-      body: {
-        'email': email,
-        'senha': password,
-      },
+      endpoint,
+      body: body,
     ) as Map<String, dynamic>;
 
     final token = response['token'] as String;

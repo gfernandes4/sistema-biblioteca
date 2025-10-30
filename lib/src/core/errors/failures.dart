@@ -83,3 +83,12 @@ class CacheFailure extends Failure {
     int? code,
   }) : super(message: message, code: code);
 }
+
+/// Falha genérica para erros não esperados
+class GenericFailure extends Failure {
+  const GenericFailure({
+    required String message,
+    int? code,
+  }) : super(message: message, code: code);
+}
+
