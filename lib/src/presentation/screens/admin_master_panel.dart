@@ -2,18 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../domain/entities/book.dart';
+import '../../domain/entities/school.dart';
 import '../providers/auth_provider.dart';
 import '../providers/books_provider.dart';
+import '../providers/school_provider.dart';
 import '../widgets/book_card.dart';
-import '../widgets/custom_button.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/empty_state_widget.dart';
 import '../widgets/error_widget.dart';
 import '../widgets/loading_widget.dart';
 import 'upload_book_screen.dart';
+import 'login_screen.dart';
 
 /// Painel do Administrador Master
-/// Acesso total ao sistema, pode gerenciar todos os livros
 class AdminMasterPanel extends StatefulWidget {
   const AdminMasterPanel({Key? key}) : super(key: key);
 
@@ -21,69 +22,285 @@ class AdminMasterPanel extends StatefulWidget {
   State<AdminMasterPanel> createState() => _AdminMasterPanelState();
 }
 
-class _AdminMasterPanelState extends State<AdminMasterPanel> {
+class _AdminMasterPanelState extends State<AdminMasterPanel>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
   String? _selectedCategory;
   bool _showSearch = false;
 
   @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      if (mounted) {
+        setState(() {}); // Redesenha para atualizar o FAB
+      }
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<SchoolProvider>().loadSchools();
+      context.read<BooksProvider>().loadBooks();
+    });
+  }
+
+  @override
   void dispose() {
+    _tabController.dispose();
     _searchController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final authProvider = context.watch<AuthProvider>();
-    final booksProvider = context.watch<BooksProvider>();
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Painel Administrativo'),
         actions: [
-          // Botão de busca
-          IconButton(
-            icon: Icon(_showSearch ? Icons.close : Icons.search),
-            onPressed: () {
-              setState(() {
-                _showSearch = !_showSearch;
-                if (!_showSearch) {
-                  _searchController.clear();
-                  booksProvider.clearSearch();
-                  _selectedCategory = null;
-                }
-              });
-            },
-          ),
-          // Botão de logout
+          if (_tabController.index == 0)
+            IconButton(
+              icon: Icon(_showSearch ? Icons.close : Icons.search),
+              onPressed: () {
+                setState(() {
+                  _showSearch = !_showSearch;
+                  if (!_showSearch) {
+                    _searchController.clear();
+                    context.read<BooksProvider>().clearSearch();
+                    _selectedCategory = null;
+                  }
+                });
+              },
+            ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () => _handleLogout(context, authProvider),
           ),
         ],
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(icon: Icon(Icons.library_books), text: 'Livros', ),
+            Tab(icon: Icon(Icons.school), text: 'Escolas'),
+          ],
+        ),
       ),
-      body: Column(
+      body: TabBarView(
+        controller: _tabController,
         children: [
-          // Header com informações do usuário
-          _buildUserHeader(context, authProvider),
-
-          // Estatísticas
-          _buildStatisticsCards(context, booksProvider),
-
-          // Barra de busca e filtros
-          if (_showSearch) _buildSearchBar(context, booksProvider),
-
-          // Lista de livros
-          Expanded(
-            child: _buildBooksList(context, booksProvider),
-          ),
+          _buildBooksTab(context),
+          _buildSchoolsTab(context),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: _buildFloatingActionButton(context),
+    );
+  }
+
+  Widget _buildBooksTab(BuildContext context) {
+    final booksProvider = context.watch<BooksProvider>();
+    final authProvider = context.watch<AuthProvider>();
+
+    return Column(
+      children: [
+        _buildUserHeader(context, authProvider),
+        _buildStatisticsCards(context, booksProvider),
+        if (_showSearch) _buildSearchBar(context, booksProvider),
+        Expanded(
+          child: _buildBooksList(context, booksProvider),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSchoolsTab(BuildContext context) {
+    final schoolProvider = context.watch<SchoolProvider>();
+
+    return RefreshIndicator(
+      onRefresh: () => schoolProvider.loadSchools(forceRefresh: true),
+      child: Builder(
+        builder: (context) {
+          if (schoolProvider.state == SchoolsState.loading &&
+              schoolProvider.schools.isEmpty) {
+            return const LoadingWidget(message: 'Carregando escolas...');
+          }
+
+          if (schoolProvider.state == SchoolsState.error &&
+              schoolProvider.schools.isEmpty) {
+            return ErrorDisplayWidget(
+              message: schoolProvider.errorMessage ?? 'Erro ao carregar escolas',
+              onRetry: () => schoolProvider.loadSchools(forceRefresh: true),
+            );
+          }
+
+          if (schoolProvider.schools.isEmpty) {
+            return EmptyStateWidget(
+              title: 'Nenhuma escola encontrada',
+              message: 'Comece adicionando a primeira escola no sistema.',
+              icon: Icons.school_outlined,
+              actionText: 'Adicionar Escola',
+              onAction: () => _showAddSchoolDialog(context),
+            );
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: schoolProvider.schools.length,
+            itemBuilder: (context, index) {
+              final school = schoolProvider.schools[index];
+              return Card(
+                margin: const EdgeInsets.only(bottom: 12),
+                child: ListTile(
+                  leading: const CircleAvatar(
+                    child: Icon(Icons.school),
+                  ),
+                  title: Text(school.nome),
+                  subtitle: Text(school.email),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete_outline, color: Colors.red),
+                    onPressed: () =>
+                        _confirmDeleteSchool(context, schoolProvider, school),
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  Widget? _buildFloatingActionButton(BuildContext context) {
+    if (_tabController.index == 0) {
+      return FloatingActionButton.extended(
         onPressed: () => _navigateToUpload(context),
         icon: const Icon(Icons.upload_file),
         label: const Text('Adicionar Livro'),
+      );
+    }
+    if (_tabController.index == 1) {
+      return FloatingActionButton.extended(
+        onPressed: () => _showAddSchoolDialog(context),
+        icon: const Icon(Icons.add),
+        label: const Text('Adicionar Escola'),
+      );
+    }
+    return null;
+  }
+
+  void _showAddSchoolDialog(BuildContext context) {
+    final formKey = GlobalKey<FormState>();
+    final nameController = TextEditingController();
+    final emailController = TextEditingController();
+    final passwordController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Adicionar Nova Escola'),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'Nome da Escola'),
+                  validator: (value) =>
+                      value!.isEmpty ? 'Campo obrigatório' : null,
+                ),
+                TextFormField(
+                  controller: emailController,
+                  decoration: const InputDecoration(labelText: 'Email de Acesso'),
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (value) {
+                    if (value!.isEmpty) return 'Campo obrigatório';
+                    if (!value.contains('@')) return 'Email inválido';
+                    return null;
+                  },
+                ),
+                TextFormField(
+                  controller: passwordController,
+                  decoration: const InputDecoration(labelText: 'Senha de Acesso'),
+                  obscureText: true,
+                  validator: (value) {
+                    if (value!.isEmpty) return 'Campo obrigatório';
+                    if (value.length < 6) return 'Mínimo 6 caracteres';
+                    return null;
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (formKey.currentState!.validate()) {
+                  final provider = context.read<SchoolProvider>();
+                  final success = await provider.createSchool(
+                    nome: nameController.text,
+                    email: emailController.text,
+                    senha: passwordController.text,
+                  );
+
+                  if (dialogContext.mounted) {
+                    Navigator.pop(dialogContext);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(success
+                            ? 'Escola adicionada com sucesso!'
+                            : provider.operationError ?? 'Erro ao criar escola'),
+                        backgroundColor: success ? Colors.green : Colors.red,
+                      ),
+                    );
+                  }
+                }
+              },
+              child: const Text('Salvar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _confirmDeleteSchool(
+      BuildContext context, SchoolProvider provider, School school) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Confirmar exclusão'),
+        content: Text(
+            'Tem certeza que deseja excluir a escola "${school.nome}"?\n\nTodos os dados associados (como usuários) podem ser afetados.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              final success = await provider.deleteSchool(school.id);
+              if (dialogContext.mounted) {
+                Navigator.pop(dialogContext);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(success
+                        ? 'Escola excluída com sucesso'
+                        : provider.operationError ?? 'Erro ao excluir escola'),
+                    backgroundColor: success ? Colors.green : Colors.red,
+                  ),
+                );
+              }
+            },
+            child: const Text('Excluir'),
+          ),
+        ],
       ),
     );
   }
@@ -156,7 +373,6 @@ class _AdminMasterPanelState extends State<AdminMasterPanel> {
 
     final totalBooks = books.length;
     final availableBooks = books.where((b) => b.isAvailable).length;
-    final categories = books.map((b) => b.category).toSet().length;
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -179,16 +395,6 @@ class _AdminMasterPanelState extends State<AdminMasterPanel> {
               availableBooks.toString(),
               Icons.check_circle,
               Colors.green,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _buildStatCard(
-              context,
-              'Categorias',
-              categories.toString(),
-              Icons.category,
-              Colors.orange,
             ),
           ),
         ],
@@ -331,12 +537,10 @@ class _AdminMasterPanelState extends State<AdminMasterPanel> {
       );
     }
 
-    // Determina qual lista usar (busca ou todos os livros)
     final books = provider.hasSearchResults
         ? provider.searchResults
         : provider.books;
 
-    // Aplica filtro de categoria se selecionado
     final filteredBooks = _selectedCategory != null
         ? books.where((b) => b.category == _selectedCategory).toList()
         : books;
@@ -468,7 +672,6 @@ class _AdminMasterPanelState extends State<AdminMasterPanel> {
   }
 
   void _readBook(BuildContext context, Book book) {
-    // TODO: Implementar navegação para tela de leitura
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Função de leitura será implementada'),
@@ -501,7 +704,11 @@ class _AdminMasterPanelState extends State<AdminMasterPanel> {
               await authProvider.logout();
               if (context.mounted) {
                 Navigator.pop(context); // Fecha o diálogo
-                Navigator.pop(context); // Volta para tela anterior
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  (route) => false,
+                );
               }
             },
             child: const Text('Sair'),

@@ -9,36 +9,47 @@ class LoginUseCase {
   LoginUseCase({required this.authRepository});
 
   /// Executa o login
-  /// 
+  ///
   /// Parâmetros:
-  /// - [email]: Email do usuário
+  /// - [username]: Email do usuário
   /// - [password]: Senha do usuário
-  /// 
+  ///
   /// Retorna: [User] se o login for bem-sucedido
   /// Throws: [Failure] se ocorrer algum erro
   Future<User> call({
-    required String email,
+    required String username,
     required String password,
   }) async {
+    final trimmedUsername = username.trim();
+    final trimmedPassword = password.trim();
+
     // Validações básicas
-    if (email.trim().isEmpty) {
-      throw ValidationFailure(message: 'Email é obrigatório');
+    if (trimmedUsername.isEmpty) {
+      throw ValidationFailure(message: 'Usuário/Email é obrigatório');
     }
-    
-    if (password.trim().isEmpty) {
+
+    if (trimmedPassword.isEmpty) {
       throw ValidationFailure(message: 'Senha é obrigatória');
     }
-    
-    if (!_isValidEmail(email)) {
-      throw ValidationFailure(message: 'Email inválido');
+
+    // Determina o tipo de usuário
+    final UserType userType;
+    if (trimmedUsername.toLowerCase() == 'admin@master.com') {
+      userType = UserType.admin;
+    } else {
+      userType = UserType.school;
     }
-    
+
+    // Valida o formato do email
+    //if (!_isValidEmail(trimmedUsername)) {
+    //  throw ValidationFailure(message: 'Email inválido');
+    //}
+
     // Executar login
-    return await authRepository.login(email.trim(), password);
+    return await authRepository.login(
+        trimmedUsername, trimmedPassword, userType);
   }
 
-  /// Validação simples de email
-  bool _isValidEmail(String email) {
-    return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
-  }
+  ///  simples de email
+  
 }
