@@ -72,29 +72,52 @@ class BooksProvider extends ChangeNotifier {
   /// Retorna o caminho do arquivo em caso de sucesso.
   /// Lança uma exceção [Failure] em caso de erro.
   Future<String> downloadBook(Book book) async {
+    // [MODIFICAÇÃO DE AUTENTICAÇÃO]
+    // Pega o token se estiver disponível, mas não falha se for nulo.
     final String? token = authRepository.getAuthToken();
-
-    if (token == null) {
-      throw const UnauthorizedFailure(message: 'Autenticação necessária para fazer o download.');
+    
+    // Define os cabeçalhos (headers)
+    final Map<String, String> headers = {};
+    if (token != null) {
+      // Adiciona o token apenas se ele existir
+      headers['Authorization'] = 'Bearer $token';
     }
 
+    // A verificação "if (token == null) { throw ... }" FOI REMOVIDA.
+
     try {
-      // TODO: O endpoint de arquivo deveria vir de ApiConstants
+      final directory = await getApplicationDocumentsDirectory();
+      
+      // [CORREÇÃO DE BUG]
+      // Garante que o nome do arquivo seja seguro, usando '/' 
+      // como separador de URL/caminho remoto
+      final fileName = book.filePath.split('/').last; 
+      
+      final filePath = '${directory.path}${Platform.pathSeparator}$fileName';
+      final file = File(filePath);
+
+      // [MELHORIA DE CACHE]
+      // Se o arquivo já existe localmente, apenas retorna o caminho
+      if (await file.exists()) {
+        return filePath;
+      }
+
+      // Se não existe, faz o download
       final url = Uri.parse('${ApiConstants.baseUrl}/livros/${book.id}/arquivo');
+      
+      // [MODIFICAÇÃO DE AUTENTICAÇÃO]
+      // Passa os 'headers' (que podem estar vazios ou conter o token)
       final response = await http.get(
         url,
-        headers: {'Authorization': 'Bearer $token'},
+        headers: headers, 
       );
 
       if (response.statusCode == 200) {
-        final directory = await getApplicationDocumentsDirectory();
-        // Garante que o nome do arquivo seja seguro
-        final fileName = book.filePath.split(Platform.pathSeparator).last;
-        final filePath = '${directory.path}${Platform.pathSeparator}$fileName';
-        
-        final file = File(filePath);
         await file.writeAsBytes(response.bodyBytes);
         return filePath;
+      } else if (response.statusCode == 401 || response.statusCode == 403) {
+        // Se o *servidor* retornar 401 (talvez o livro não seja público)
+        throw const UnauthorizedFailure(message: 'Você não tem permissão para baixar este livro.');
       } else {
         throw NetworkFailure(message: 'Falha no download. Status: ${response.statusCode}');
       }
