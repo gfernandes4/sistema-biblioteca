@@ -1,13 +1,14 @@
+// [COPIE E COLE ESTE ARQUIVO INTEIRO]
+// Substitua todo o conteúdo de custom_button.dart por este:
+
 import 'package:flutter/material.dart';
 
-/// Botão customizado reutilizável
+/// Botão customizado reutilizável (Novo Design)
 class CustomButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;
   final bool isLoading;
   final bool isOutlined;
-  final Color? color;
-  final Color? textColor;
   final IconData? icon;
   final double? width;
   final double? height;
@@ -18,8 +19,6 @@ class CustomButton extends StatelessWidget {
     this.onPressed,
     this.isLoading = false,
     this.isOutlined = false,
-    this.color,
-    this.textColor,
     this.icon,
     this.width,
     this.height,
@@ -27,68 +26,61 @@ class CustomButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    
+    // Os estilos (cor, fonte, tamanho) agora vêm do app_themes.dart
+    // (elevatedButtonTheme e outlinedButtonTheme)
+
     if (isOutlined) {
       return SizedBox(
         width: width,
-        height: height ?? 48,
+        height: height ?? 52, // Altura padrão do novo tema
         child: OutlinedButton(
           onPressed: isLoading ? null : onPressed,
-          style: OutlinedButton.styleFrom(
-            foregroundColor: color ?? theme.primaryColor,
-            side: BorderSide(
-              color: color ?? theme.primaryColor,
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-          child: _buildChild(),
+          child: _buildChild(context, isOutlined: true),
         ),
       );
     }
 
     return SizedBox(
       width: width,
-      height: height ?? 48,
+      height: height ?? 52, // Altura padrão do novo tema
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          foregroundColor: textColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-        child: _buildChild(),
+        child: _buildChild(context, isOutlined: false),
       ),
     );
   }
 
-  Widget _buildChild() {
+  Widget _buildChild(BuildContext context, {required bool isOutlined}) {
     if (isLoading) {
-      return const SizedBox(
-        width: 20,
-        height: 20,
+      // Define a cor do indicador de loading
+      final color = isOutlined 
+          ? Theme.of(context).primaryColor 
+          : Colors.white;
+          
+      return SizedBox(
+        width: 24,
+        height: 24,
         child: CircularProgressIndicator(
-          strokeWidth: 2,
-          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+          strokeWidth: 2.5,
+          valueColor: AlwaysStoppedAnimation<Color>(color),
         ),
       );
     }
+    
+    // Força o texto para MAIÚSCULAS, como no design
+    final buttonText = Text(text.toUpperCase());
 
     if (icon != null) {
       return Row(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center, // Centraliza o ícone e texto
         children: [
-          Icon(icon, size: 18),
-          const SizedBox(width: 8),
-          Text(text),
+          Icon(icon, size: 20),
+          const SizedBox(width: 10),
+          buttonText,
         ],
       );
     }
 
-    return Text(text);
+    return buttonText;
   }
 }

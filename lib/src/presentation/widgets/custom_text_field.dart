@@ -1,9 +1,11 @@
+// [COPIE E COLE ESTE ARQUIVO INTEIRO]
+// Substitua todo o conteúdo de custom_text_field.dart por este:
+
 import 'package:flutter/material.dart';
 
-/// Campo de texto customizado reutilizável
+/// Campo de texto customizado reutilizável (Novo Design)
 class CustomTextField extends StatelessWidget {
-  final String label;
-  final String? hint;
+  final String hint; // 'label' foi substituída por 'hint'
   final TextEditingController? controller;
   final String? Function(String?)? validator;
   final bool obscureText;
@@ -18,8 +20,7 @@ class CustomTextField extends StatelessWidget {
 
   const CustomTextField({
     Key? key,
-    required this.label,
-    this.hint,
+    required this.hint, // Alterado de 'label' para 'hint'
     this.controller,
     this.validator,
     this.obscureText = false,
@@ -35,37 +36,27 @@ class CustomTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          validator: validator,
-          obscureText: obscureText,
-          keyboardType: keyboardType,
-          maxLines: maxLines,
-          enabled: enabled,
-          onChanged: onChanged,
-          decoration: InputDecoration(
-            hintText: hint,
-            prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
-            suffixIcon: suffixIcon != null
-                ? IconButton(
-                    icon: Icon(suffixIcon),
-                    onPressed: onSuffixIconPressed,
-                  )
-                : null,
-            errorText: errorText,
-          ),
-        ),
-      ],
+    // Removemos o "Column" e o "Text" que existiam antes
+    return TextFormField(
+      controller: controller,
+      validator: validator,
+      obscureText: obscureText,
+      keyboardType: keyboardType,
+      maxLines: maxLines,
+      enabled: enabled,
+      onChanged: onChanged,
+      // O estilo agora vem do inputDecorationTheme no app_themes.dart
+      decoration: InputDecoration(
+        hintText: hint, // 'hint' é usado diretamente
+        prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
+        suffixIcon: suffixIcon != null
+            ? IconButton(
+                icon: Icon(suffixIcon),
+                onPressed: onSuffixIconPressed,
+              )
+            : null,
+        errorText: errorText,
+      ),
     );
   }
 }

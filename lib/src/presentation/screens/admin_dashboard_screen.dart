@@ -22,7 +22,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     super.initState();
     // Carrega os livros ao abrir o painel
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Carrega os livros
       context.read<BooksProvider>().loadBooks(forceRefresh: true);
+      
+      context.read<AuthProvider>().loadCurrentUserOnStartup();
     });
   }
 

@@ -1,3 +1,6 @@
+// [COPIE E COLE ESTE ARQUIVO INTEIRO]
+// Substitua todo o conteúdo de auth_provider.dart por este:
+
 import 'package:flutter/foundation.dart';
 
 import '../../domain/entities/user.dart';
@@ -30,6 +33,31 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoggedIn => authRepository.isLoggedIn;
   String? get currentUserType => authRepository.currentUserType;
 
+  // [NOVA FUNÇÃO - CORREÇÃO 2]
+  /// Carrega o usuário do repositório ao iniciar o app.
+  /// Isso resolve o problema do _currentUser ser nulo após reiniciar.
+  Future<void> loadCurrentUserOnStartup() async {
+    // Só executa se estiver logado E o usuário em memória for nulo
+    if (isLoggedIn && _currentUser == null) {
+      _setLoading(true);
+      try {
+        // [AÇÃO NECESSÁRIA]
+        // Esta função (getSavedUser) precisa ser criada no seu repositório.
+        // Ela deve ler os dados (id, email, tipo) do SecureStorage
+        // e devolver um objeto User.
+        final user = await authRepository.getSavedUser();
+        _currentUser = user;
+      } catch (e) {
+        // Se falhar (ex: token inválido), faz logout
+        await logout();
+        _setError(_getErrorMessage(e));
+      } finally {
+        _setLoading(false);
+      }
+    }
+  }
+
+
   /// Faz login
   Future<bool> login({
     required String username,
@@ -40,11 +68,20 @@ class AuthProvider extends ChangeNotifier {
     _clearError();
 
     try {
+      // 1. O loginUseCase é chamado.
       final user = await loginUseCase(
         username: username,
         password: password,
       );
-      _currentUser = user;
+
+      // 2. [A CORREÇÃO - PROBLEMA 1]
+      //    Enriquece o objeto 'user' retornado com os dados que
+      //    temos aqui (username), caso eles venham nulos do useCase.
+      _currentUser = user.copyWith(
+        email: user.email ?? username, // Usa 'username' (que é o email)
+        name: user.name ?? username, // Usa o 'username' como fallback do nome
+      );
+
       _setLoading(false);
       notifyListeners(); // Notifica para atualizar a UI
       return true;

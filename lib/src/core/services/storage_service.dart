@@ -1,9 +1,12 @@
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:logger/logger.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/app_constants.dart';
 
-/// Serviço para armazenamento local de preferências
+/// Serviço para armazenamento local de preferências (Singleton).
+///
+/// Garante uma única instância para gerenciar o SharedPreferences em todo o app.
+/// É crucial chamar `await StorageService().init()` no `main.dart` antes de usar.
 class StorageService {
   static StorageService? _instance;
   SharedPreferences? _prefs;
@@ -16,26 +19,55 @@ class StorageService {
     return _instance!;
   }
 
-  /// Inicializa o SharedPreferences
+  /// Inicializa a instância do SharedPreferences.
+  ///
+  /// Deve ser chamado na inicialização do aplicativo para garantir que `_prefs` não seja nulo.
   Future<void> init() async {
     try {
       _prefs = await SharedPreferences.getInstance();
-      _logger.d('StorageService inicializado');
+      _logger.i('StorageService inicializado com sucesso.');
     } catch (e) {
-      _logger.e('Erro ao inicializar StorageService: $e');
+      _logger.e('Falha ao inicializar StorageService: $e');
+      // Propaga o erro para que a inicialização do app possa tratá-lo.
+      rethrow;
     }
   }
 
+  /// Getter privado para o SharedPreferences.
+  ///
+  /// Lança uma exceção se o serviço for usado antes da inicialização.
   SharedPreferences get _preferences {
     if (_prefs == null) {
-      throw Exception('StorageService não foi inicializado. Chame init() primeiro.');
+      const message =
+          'StorageService não foi inicializado. Chame init() no main.dart.';
+      _logger.f(message); // 'f' para erro fatal.
+      throw Exception(message);
     }
     return _prefs!;
   }
 
-  // === AUTH TOKEN ===
-  
-  /// Salva o token de autenticação
+  // === ESTADO DE AUTENTICAÇÃO ===
+
+  /// Verifica se o usuário está logado (baseado na existência do token).
+  bool get isLoggedIn => _preferences.containsKey(AppConstants.tokenKey);
+
+  /// Limpa todos os dados de autenticação do usuário do armazenamento local.
+  Future<void> logout() async {
+    try {
+      await _preferences.remove(AppConstants.tokenKey);
+      await _preferences.remove(AppConstants.userIdKey);
+      await _preferences.remove(AppConstants.userTypeKey);
+      await _preferences.remove(AppConstants.userEmailKey);
+      await _preferences.remove(AppConstants.userNameKey); // Limpa o nome do usuário
+      _logger.i('Dados de sessão do usuário removidos (logout).');
+    } catch (e) {
+      _logger.e('Erro ao limpar dados de sessão no StorageService: $e');
+    }
+  }
+
+  // === DADOS DE AUTENTICAÇÃO E USUÁRIO ===
+
+  /// Salva o token de autenticação.
   Future<bool> saveAuthToken(String token) async {
     try {
       return await _preferences.setString(AppConstants.tokenKey, token);
@@ -45,7 +77,7 @@ class StorageService {
     }
   }
 
-  /// Recupera o token de autenticação
+  /// Recupera o token de autenticação.
   String? getAuthToken() {
     try {
       return _preferences.getString(AppConstants.tokenKey);
@@ -55,19 +87,7 @@ class StorageService {
     }
   }
 
-  /// Remove o token de autenticação
-  Future<bool> removeAuthToken() async {
-    try {
-      return await _preferences.remove(AppConstants.tokenKey);
-    } catch (e) {
-      _logger.e('Erro ao remover token: $e');
-      return false;
-    }
-  }
-
-  // === USER TYPE ===
-  
-  /// Salva o tipo de usuário
+  /// Salva o tipo de usuário (role).
   Future<bool> saveUserType(String userType) async {
     try {
       return await _preferences.setString(AppConstants.userTypeKey, userType);
@@ -77,7 +97,7 @@ class StorageService {
     }
   }
 
-  /// Recupera o tipo de usuário
+  /// Recupera o tipo de usuário.
   String? getUserType() {
     try {
       return _preferences.getString(AppConstants.userTypeKey);
@@ -87,9 +107,7 @@ class StorageService {
     }
   }
 
-  // === USER ID ===
-  
-  /// Salva o ID do usuário
+  /// Salva o ID do usuário.
   Future<bool> saveUserId(String userId) async {
     try {
       return await _preferences.setString(AppConstants.userIdKey, userId);
@@ -99,7 +117,7 @@ class StorageService {
     }
   }
 
-  /// Recupera o ID do usuário
+  /// Recupera o ID do usuário.
   String? getUserId() {
     try {
       return _preferences.getString(AppConstants.userIdKey);
@@ -109,9 +127,49 @@ class StorageService {
     }
   }
 
-  // === THEME ===
-  
-  /// Salva o modo do tema
+  /// Salva o email do usuário.
+  Future<bool> saveUserEmail(String email) async {
+    try {
+      return await _preferences.setString(AppConstants.userEmailKey, email);
+    } catch (e) {
+      _logger.e('Erro ao salvar email do usuário: $e');
+      return false;
+    }
+  }
+
+  /// Recupera o email do usuário.
+  String? getUserEmail() {
+    try {
+      return _preferences.getString(AppConstants.userEmailKey);
+    } catch (e) {
+      _logger.e('Erro ao recuperar email do usuário: $e');
+      return null;
+    }
+  }
+
+  /// Salva o nome do usuário.
+  Future<bool> saveUserName(String name) async {
+    try {
+      return await _preferences.setString(AppConstants.userNameKey, name);
+    } catch (e) {
+      _logger.e('Erro ao salvar nome do usuário: $e');
+      return false;
+    }
+  }
+
+  /// Recupera o nome do usuário.
+  String? getUserName() {
+    try {
+      return _preferences.getString(AppConstants.userNameKey);
+    } catch (e) {
+      _logger.e('Erro ao recuperar nome do usuário: $e');
+      return null;
+    }
+  }
+
+  // === CONFIGURAÇÕES DO APP ===
+
+  /// Salva o modo do tema (light/dark).
   Future<bool> saveThemeMode(String themeMode) async {
     try {
       return await _preferences.setString(AppConstants.themeKey, themeMode);
@@ -121,115 +179,13 @@ class StorageService {
     }
   }
 
-  /// Recupera o modo do tema
+  /// Recupera o modo do tema.
   String? getThemeMode() {
     try {
       return _preferences.getString(AppConstants.themeKey);
     } catch (e) {
       _logger.e('Erro ao recuperar tema: $e');
       return null;
-    }
-  }
-
-  // === GENERIC METHODS ===
-  
-  /// Salva string
-  Future<bool> setString(String key, String value) async {
-    try {
-      return await _preferences.setString(key, value);
-    } catch (e) {
-      _logger.e('Erro ao salvar string $key: $e');
-      return false;
-    }
-  }
-
-  /// Recupera string
-  String? getString(String key) {
-    try {
-      return _preferences.getString(key);
-    } catch (e) {
-      _logger.e('Erro ao recuperar string $key: $e');
-      return null;
-    }
-  }
-
-  /// Salva boolean
-  Future<bool> setBool(String key, bool value) async {
-    try {
-      return await _preferences.setBool(key, value);
-    } catch (e) {
-      _logger.e('Erro ao salvar bool $key: $e');
-      return false;
-    }
-  }
-
-  /// Recupera boolean
-  bool? getBool(String key) {
-    try {
-      return _preferences.getBool(key);
-    } catch (e) {
-      _logger.e('Erro ao recuperar bool $key: $e');
-      return null;
-    }
-  }
-
-  /// Salva int
-  Future<bool> setInt(String key, int value) async {
-    try {
-      return await _preferences.setInt(key, value);
-    } catch (e) {
-      _logger.e('Erro ao salvar int $key: $e');
-      return false;
-    }
-  }
-
-  /// Recupera int
-  int? getInt(String key) {
-    try {
-      return _preferences.getInt(key);
-    } catch (e) {
-      _logger.e('Erro ao recuperar int $key: $e');
-      return null;
-    }
-  }
-
-  /// Remove uma chave específica
-  Future<bool> remove(String key) async {
-    try {
-      return await _preferences.remove(key);
-    } catch (e) {
-      _logger.e('Erro ao remover $key: $e');
-      return false;
-    }
-  }
-
-  /// Limpa todos os dados armazenados
-  Future<bool> clear() async {
-    try {
-      return await _preferences.clear();
-    } catch (e) {
-      _logger.e('Erro ao limpar preferências: $e');
-      return false;
-    }
-  }
-
-  /// Verifica se o usuário está logado
-  bool get isLoggedIn {
-    final token = getAuthToken();
-    return token != null && token.isNotEmpty;
-  }
-
-  /// Faz logout removendo dados do usuário
-  Future<bool> logout() async {
-    try {
-      await removeAuthToken();
-      await remove(AppConstants.userTypeKey);
-      await remove(AppConstants.userIdKey);
-      _logger.d('Logout realizado com sucesso');
-      return true;
-    } catch (e) {
-      _logger.e('Erro no logout: $e');
-      return false;
     }
   }
 }

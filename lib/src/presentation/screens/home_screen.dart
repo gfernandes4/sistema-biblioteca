@@ -56,17 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
       title: const Text('Biblioteca Digital'),
       actions: [
         // Botão de tema
-        Consumer<ThemeProvider>(
-          builder: (context, themeProvider, child) {
-            return IconButton(
-              onPressed: themeProvider.toggleTheme,
-              icon: Icon(
-                themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
-              ),
-              tooltip: 'Alternar tema',
-            );
-          },
-        ),
+    
         
         // Menu do usuário
         Consumer<AuthProvider>(
@@ -290,14 +280,21 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('Confirmar exclusão'),
         content: const Text('Tem certeza que deseja excluir este livro?'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Excluir'),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Excluir'),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancelar'),
+              ),
+            ],
           ),
         ],
       ),
@@ -324,13 +321,20 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('Confirmar saída'),
         content: const Text('Tem certeza que deseja sair?'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Sair'),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Sair'),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancelar'),
+              ),
+            ],
           ),
         ],
       ),

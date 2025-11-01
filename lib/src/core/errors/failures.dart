@@ -45,6 +45,13 @@ class UnauthorizedFailure extends Failure {
   }) : super(message: message, code: code);
 }
 
+class AuthFailure extends Failure {
+  const AuthFailure({
+    String message = 'Falha na autenticação',
+    int? code,
+  }) : super(message: message, code: code);
+}
+
 /// Falhas de validação
 class ValidationFailure extends Failure {
   const ValidationFailure({

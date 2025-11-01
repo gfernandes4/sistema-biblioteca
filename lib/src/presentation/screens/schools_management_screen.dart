@@ -190,7 +190,7 @@ class _SchoolsManagementScreenState extends State<SchoolsManagementScreen> {
     );
   }
 
-  void _showAddSchoolDialog(BuildContext context) {
+ void _showAddSchoolDialog(BuildContext context) {
     final nomeController = TextEditingController();
     final emailController = TextEditingController();
     final senhaController = TextEditingController();
@@ -208,8 +208,9 @@ class _SchoolsManagementScreenState extends State<SchoolsManagementScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // [CORREÇÃO: 'label' alterado para 'hint']
                   CustomTextField(
-                    label: 'Nome da Escola',
+                    hint: 'Nome da Escola',
                     controller: nomeController,
                     prefixIcon: Icons.school,
                     validator: (value) {
@@ -220,8 +221,9 @@ class _SchoolsManagementScreenState extends State<SchoolsManagementScreen> {
                     },
                   ),
                   const SizedBox(height: 16),
+                  // [CORREÇÃO: 'label' alterado para 'hint']
                   CustomTextField(
-                    label: 'Email',
+                    hint: 'Email',
                     controller: emailController,
                     prefixIcon: Icons.email,
                     keyboardType: TextInputType.emailAddress,
@@ -236,8 +238,9 @@ class _SchoolsManagementScreenState extends State<SchoolsManagementScreen> {
                     },
                   ),
                   const SizedBox(height: 16),
+                  // [CORREÇÃO: 'label' alterado para 'hint']
                   CustomTextField(
-                    label: 'Senha',
+                    hint: 'Senha',
                     controller: senhaController,
                     prefixIcon: Icons.lock,
                     obscureText: obscurePassword,
@@ -262,54 +265,61 @@ class _SchoolsManagementScreenState extends State<SchoolsManagementScreen> {
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar'),
-            ),
-            Consumer<SchoolProvider>(
-              builder: (context, provider, _) {
-                return ElevatedButton(
-                  onPressed: provider.isOperating
-                      ? null
-                      : () async {
-                          if (formKey.currentState!.validate()) {
-                            final success = await provider.createSchool(
-                              nome: nomeController.text,
-                              email: emailController.text,
-                              senha: senhaController.text,
-                            );
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Consumer<SchoolProvider>(
+                  builder: (context, provider, _) {
+                    return ElevatedButton(
+                      onPressed: provider.isOperating
+                          ? null
+                          : () async {
+                              if (formKey.currentState!.validate()) {
+                                final success = await provider.createSchool(
+                                  nome: nomeController.text,
+                                  email: emailController.text,
+                                  senha: senhaController.text,
+                                );
 
-                            if (context.mounted) {
-                              if (success) {
-                                Navigator.pop(context);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Escola criada com sucesso'),
-                                    backgroundColor: Colors.green,
-                                  ),
-                                );
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      provider.operationError ?? 'Erro ao criar escola',
-                                    ),
-                                    backgroundColor: Colors.red,
-                                  ),
-                                );
+                                if (context.mounted) {
+                                  if (success) {
+                                    Navigator.pop(context);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Escola criada com sucesso'),
+                                        backgroundColor: Colors.green,
+                                      ),
+                                    );
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          provider.operationError ?? 'Erro ao criar escola',
+                                        ),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                }
                               }
-                            }
-                          }
-                        },
-                  child: provider.isOperating
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('Adicionar'),
-                );
-              },
+                            },
+                      child: provider.isOperating
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text('Adicionar'),
+                    );
+                  },
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancelar'),
+                ),
+              ],
             ),
           ],
         ),
@@ -335,8 +345,9 @@ class _SchoolsManagementScreenState extends State<SchoolsManagementScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // [CORREÇÃO: 'label' alterado para 'hint']
                   CustomTextField(
-                    label: 'Nome da Escola',
+                    hint: 'Nome da Escola',
                     controller: nomeController,
                     prefixIcon: Icons.school,
                     validator: (value) {
@@ -347,8 +358,9 @@ class _SchoolsManagementScreenState extends State<SchoolsManagementScreen> {
                     },
                   ),
                   const SizedBox(height: 16),
+                  // [CORREÇÃO: 'label' alterado para 'hint']
                   CustomTextField(
-                    label: 'Email',
+                    hint: 'Email',
                     controller: emailController,
                     prefixIcon: Icons.email,
                     keyboardType: TextInputType.emailAddress,
@@ -363,8 +375,9 @@ class _SchoolsManagementScreenState extends State<SchoolsManagementScreen> {
                     },
                   ),
                   const SizedBox(height: 16),
+                  // [CORREÇÃO: 'label' alterado para 'hint']
                   CustomTextField(
-                    label: 'Nova Senha (deixe vazio para manter)',
+                    hint: 'Nova Senha (deixe vazio para manter)',
                     controller: senhaController,
                     prefixIcon: Icons.lock,
                     obscureText: obscurePassword,
@@ -454,32 +467,39 @@ class _SchoolsManagementScreenState extends State<SchoolsManagementScreen> {
           'Esta ação não pode ser desfeita e a escola não poderá mais acessar o sistema.',
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              final success = await provider.deleteSchool(school.id);
-              
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      success
-                          ? 'Escola excluída com sucesso'
-                          : provider.operationError ?? 'Erro ao excluir escola',
-                    ),
-                    backgroundColor: success ? Colors.green : Colors.red,
-                  ),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
-            child: const Text('Excluir'),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ElevatedButton(
+                onPressed: () async {
+                  Navigator.pop(context);
+                  final success = await provider.deleteSchool(school.id);
+                  
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          success
+                              ? 'Escola excluída com sucesso'
+                              : provider.operationError ?? 'Erro ao excluir escola',
+                        ),
+                        backgroundColor: success ? Colors.green : Colors.red,
+                      ),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                ),
+                child: const Text('Excluir'),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancelar'),
+              ),
+            ],
           ),
         ],
       ),

@@ -8,6 +8,8 @@ class AppConstants {
   static const String tokenKey = 'auth_token';
   static const String userTypeKey = 'user_type';
   static const String userIdKey = 'user_id';
+  static const String userEmailKey = 'user_email';
+  static const String userNameKey = 'user_name';
   static const String themeKey = 'theme_mode';
   
   // Tipos de usuário

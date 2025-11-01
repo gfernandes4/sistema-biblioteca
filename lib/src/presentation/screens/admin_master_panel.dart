@@ -80,8 +80,11 @@ class _AdminMasterPanelState extends State<AdminMasterPanel>
         ],
         bottom: TabBar(
           controller: _tabController,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white.withOpacity(0.7),
+          indicatorColor: Colors.white,
           tabs: const [
-            Tab(icon: Icon(Icons.library_books), text: 'Livros', ),
+            Tab(icon: Icon(Icons.library_books), text: 'Livros'),
             Tab(icon: Icon(Icons.school), text: 'Escolas'),
           ],
         ),
@@ -210,6 +213,7 @@ class _AdminMasterPanelState extends State<AdminMasterPanel>
                   validator: (value) =>
                       value!.isEmpty ? 'Campo obrigatório' : null,
                 ),
+                const SizedBox(height: 8),
                 TextFormField(
                   controller: emailController,
                   decoration: const InputDecoration(labelText: 'Email de Acesso'),
@@ -220,6 +224,7 @@ class _AdminMasterPanelState extends State<AdminMasterPanel>
                     return null;
                   },
                 ),
+                const SizedBox(height: 8),
                 TextFormField(
                   controller: passwordController,
                   decoration: const InputDecoration(labelText: 'Senha de Acesso'),
@@ -234,34 +239,41 @@ class _AdminMasterPanelState extends State<AdminMasterPanel>
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (formKey.currentState!.validate()) {
-                  final provider = context.read<SchoolProvider>();
-                  final success = await provider.createSchool(
-                    nome: nameController.text,
-                    email: emailController.text,
-                    senha: passwordController.text,
-                  );
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ElevatedButton(
+                  onPressed: () async {
+                    if (formKey.currentState!.validate()) {
+                      final provider = context.read<SchoolProvider>();
+                      final success = await provider.createSchool(
+                        nome: nameController.text,
+                        email: emailController.text,
+                        senha: passwordController.text,
+                      );
 
-                  if (dialogContext.mounted) {
-                    Navigator.pop(dialogContext);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(success
-                            ? 'Escola adicionada com sucesso!'
-                            : provider.operationError ?? 'Erro ao criar escola'),
-                        backgroundColor: success ? Colors.green : Colors.red,
-                      ),
-                    );
-                  }
-                }
-              },
-              child: const Text('Salvar'),
+                      if (dialogContext.mounted) {
+                        Navigator.pop(dialogContext);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(success
+                                ? 'Escola adicionada com sucesso!'
+                                : provider.operationError ?? 'Erro ao criar escola'),
+                            backgroundColor: success ? Colors.green : Colors.red,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  child: const Text('Salvar'),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Cancelar'),
+                ),
+              ],
             ),
           ],
         );
@@ -278,27 +290,34 @@ class _AdminMasterPanelState extends State<AdminMasterPanel>
         content: Text(
             'Tem certeza que deseja excluir a escola "${school.nome}"?\n\nTodos os dados associados (como usuários) podem ser afetados.'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () async {
-              final success = await provider.deleteSchool(school.id);
-              if (dialogContext.mounted) {
-                Navigator.pop(dialogContext);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(success
-                        ? 'Escola excluída com sucesso'
-                        : provider.operationError ?? 'Erro ao excluir escola'),
-                    backgroundColor: success ? Colors.green : Colors.red,
-                  ),
-                );
-              }
-            },
-            child: const Text('Excluir'),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                onPressed: () async {
+                  final success = await provider.deleteSchool(school.id);
+                  if (dialogContext.mounted) {
+                    Navigator.pop(dialogContext);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(success
+                            ? 'Escola excluída com sucesso'
+                            : provider.operationError ?? 'Erro ao excluir escola'),
+                        backgroundColor: success ? Colors.green : Colors.red,
+                      ),
+                    );
+                  }
+                },
+                child: const Text('Excluir'),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('Cancelar'),
+              ),
+            ],
           ),
         ],
       ),
@@ -339,7 +358,7 @@ class _AdminMasterPanelState extends State<AdminMasterPanel>
                   ),
                 ),
                 Text(
-                  user?.email ?? 'admin@biblioteca.com',
+                  user?.email ?? '-',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: Colors.grey[600],
                   ),
@@ -454,7 +473,7 @@ class _AdminMasterPanelState extends State<AdminMasterPanel>
                 child: TextField(
                   controller: _searchController,
                   decoration: InputDecoration(
-                    hintText: 'Buscar por título, autor...',
+                    hintText: 'Buscar por título',
                     prefixIcon: const Icon(Icons.search),
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
@@ -639,32 +658,39 @@ class _AdminMasterPanelState extends State<AdminMasterPanel>
           'Tem certeza que deseja excluir o livro "${book.title}"?\n\nEsta ação não pode ser desfeita.',
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              final success = await provider.deleteBook(book.id);
-              
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      success
-                          ? 'Livro excluído com sucesso'
-                          : 'Erro ao excluir livro',
-                    ),
-                    backgroundColor: success ? Colors.green : Colors.red,
-                  ),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
-            child: const Text('Excluir'),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ElevatedButton(
+                onPressed: () async {
+                  Navigator.pop(context);
+                  final success = await provider.deleteBook(book.id);
+                  
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          success
+                              ? 'Livro excluído com sucesso'
+                              : 'Erro ao excluir livro',
+                        ),
+                        backgroundColor: success ? Colors.green : Colors.red,
+                      ),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                ),
+                child: const Text('Excluir'),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancelar'),
+              ),
+            ],
           ),
         ],
       ),
@@ -706,23 +732,30 @@ class _AdminMasterPanelState extends State<AdminMasterPanel>
         title: const Text('Confirmar logout'),
         content: const Text('Deseja realmente sair?'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              await authProvider.logout();
-              if (context.mounted) {
-                Navigator.pop(context); // Fecha o diálogo
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
-                  (route) => false,
-                );
-              }
-            },
-            child: const Text('Sair'),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ElevatedButton(
+                onPressed: () async {
+                  await authProvider.logout();
+                  if (context.mounted) {
+                    Navigator.pop(context); // Fecha o diálogo
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (context) => const LoginScreen()),
+                      (route) => false,
+                    );
+                  }
+                },
+                child: const Text('Sair'),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancelar'),
+              ),
+            ],
           ),
         ],
       ),
