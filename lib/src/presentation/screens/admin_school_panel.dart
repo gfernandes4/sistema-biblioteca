@@ -540,11 +540,21 @@ class _AdminSchoolPanelState extends State<AdminSchoolPanel> {
   }
 
   void _readBook(BuildContext context, Book book) {
-    // TODO: Implementar navegação para tela de leitura
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Função de leitura será implementada'),
-      ),
+    // Verifica se o formato é suportado antes de tentar abrir
+    if (book.fileFormat.toLowerCase() != 'pdf') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Formato não suportado: ${book.fileFormat.toUpperCase()}'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+    
+    // Navega para a tela do leitor de PDF
+    Navigator.of(context).pushNamed(
+      '/book-reader',
+      arguments: book.id,
     );
   }
 
