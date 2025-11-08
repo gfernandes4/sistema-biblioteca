@@ -257,7 +257,7 @@ class _AdminSchoolPanelState extends State<AdminSchoolPanel> {
                 child: TextField(
                   controller: _searchController,
                   decoration: InputDecoration(
-                    hintText: 'Buscar por título, autor...',
+                    hintText: 'Buscar por título',
                     prefixIcon: const Icon(Icons.search),
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
@@ -507,32 +507,39 @@ class _AdminSchoolPanelState extends State<AdminSchoolPanel> {
           'Tem certeza que deseja excluir o livro "${book.title}"?\n\nEsta ação não pode ser desfeita.',
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              final success = await provider.deleteBook(book.id);
-              
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      success
-                          ? 'Livro excluído com sucesso'
-                          : 'Erro ao excluir livro',
-                    ),
-                    backgroundColor: success ? Colors.green : Colors.red,
-                  ),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
-            child: const Text('Excluir'),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ElevatedButton(
+                onPressed: () async {
+                  Navigator.pop(context);
+                  final success = await provider.deleteBook(book.id);
+                  
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          success
+                              ? 'Livro excluído com sucesso'
+                              : 'Erro ao excluir livro',
+                        ),
+                        backgroundColor: success ? Colors.green : Colors.red,
+                      ),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                ),
+                child: const Text('Excluir'),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancelar'),
+              ),
+            ],
           ),
         ],
       ),
@@ -540,11 +547,21 @@ class _AdminSchoolPanelState extends State<AdminSchoolPanel> {
   }
 
   void _readBook(BuildContext context, Book book) {
-    // TODO: Implementar navegação para tela de leitura
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Função de leitura será implementada'),
-      ),
+    // Verifica se o formato é suportado antes de tentar abrir
+    if (book.fileFormat.toLowerCase() != 'pdf') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Formato não suportado: ${book.fileFormat.toUpperCase()}'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+    
+    // Navega para a tela do leitor de PDF
+    Navigator.of(context).pushNamed(
+      '/book-reader',
+      arguments: book.id,
     );
   }
 
@@ -564,22 +581,29 @@ class _AdminSchoolPanelState extends State<AdminSchoolPanel> {
         title: const Text('Confirmar logout'),
         content: const Text('Deseja realmente sair?'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              await authProvider.logout();
-              if (context.mounted) {
-                // Navega para o login e limpa a pilha de navegação
-                Navigator.of(context).pushNamedAndRemoveUntil(
-                  '/login',
-                  (route) => false,
-                );
-              }
-            },
-            child: const Text('Sair'),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ElevatedButton(
+                onPressed: () async {
+                  await authProvider.logout();
+                  if (context.mounted) {
+                    // Navega para o login e limpa a pilha de navegação
+                    Navigator.of(context).pushNamedAndRemoveUntil(
+                      '/login',
+                      (route) => false,
+                    );
+                  }
+                },
+                child: const Text('Sair'),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancelar'),
+              ),
+            ],
           ),
         ],
       ),

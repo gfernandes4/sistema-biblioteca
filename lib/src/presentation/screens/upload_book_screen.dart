@@ -1,3 +1,6 @@
+// [COPIE E COLE ESTE ARQUIVO INTEIRO]
+// Substitua todo o conteúdo de upload_book_screen.dart por este:
+
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -35,6 +38,14 @@ class _UploadBookScreenState extends State<UploadBookScreen> {
     super.dispose();
   }
 
+  // Estilo de texto para os rótulos, usando a nova fonte do tema
+  TextStyle? _getLabelStyle(BuildContext context) {
+    return Theme.of(context).textTheme.bodyLarge?.copyWith(
+      fontSize: 18, // Um pouco maior para rótulos de formulário
+      color: Theme.of(context).primaryColor, // Cor azul
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -53,9 +64,9 @@ class _UploadBookScreenState extends State<UploadBookScreen> {
               const SizedBox(height: 24),
               
               // Título
+              // [CORREÇÃO: 'label' alterado para 'hint']
               CustomTextField(
-                label: 'Título *',
-                hint: 'Digite o título do livro',
+                hint: 'Título *',
                 controller: _titleController,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -71,9 +82,9 @@ class _UploadBookScreenState extends State<UploadBookScreen> {
               const SizedBox(height: 16),
               
               // Autor
+              // [CORREÇÃO: 'label' alterado para 'hint']
               CustomTextField(
-                label: 'Autor *',
-                hint: 'Digite o nome do autor',
+                hint: 'Autor *',
                 controller: _authorController,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -94,9 +105,9 @@ class _UploadBookScreenState extends State<UploadBookScreen> {
               const SizedBox(height: 16),
               
               // Descrição
+              // [CORREÇÃO: 'label' alterado para 'hint']
               CustomTextField(
-                label: 'Descrição',
-                hint: 'Digite uma descrição do livro (opcional)',
+                hint: 'Descrição (opcional)',
                 controller: _descriptionController,
                 maxLines: 3,
               ),
@@ -121,34 +132,8 @@ class _UploadBookScreenState extends State<UploadBookScreen> {
               Consumer<BooksProvider>(
                 builder: (context, booksProvider, child) {
                   if (booksProvider.uploadErrorMessage != null) {
-                    return Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.red.withOpacity(0.3)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.error_outline,
-                            color: Colors.red,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              booksProvider.uploadErrorMessage!,
-                              style: const TextStyle(color: Colors.red),
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: () => booksProvider.clearUploadError(),
-                            icon: const Icon(Icons.close, size: 18),
-                            color: Colors.red,
-                          ),
-                        ],
-                      ),
+                    return _buildErrorMessage(booksProvider.uploadErrorMessage!, 
+                      () => booksProvider.clearUploadError()
                     );
                   }
                   return const SizedBox.shrink();
@@ -165,11 +150,10 @@ class _UploadBookScreenState extends State<UploadBookScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Rótulo de texto com a nova fonte
         Text(
           'Arquivo do Livro *',
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-            fontWeight: FontWeight.w500,
-          ),
+          style: _getLabelStyle(context),
         ),
         const SizedBox(height: 8),
         
@@ -177,10 +161,11 @@ class _UploadBookScreenState extends State<UploadBookScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
+            color: Theme.of(context).inputDecorationTheme.fillColor,
             border: Border.all(
               color: _selectedFile != null
                   ? Theme.of(context).primaryColor
-                  : Colors.grey,
+                  : Colors.grey.shade400,
             ),
             borderRadius: BorderRadius.circular(8),
           ),
@@ -198,7 +183,7 @@ class _UploadBookScreenState extends State<UploadBookScreen> {
               if (_selectedFile != null) ...[
                 Text(
                   _fileName ?? 'Arquivo selecionado',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     fontWeight: FontWeight.w500,
                   ),
                   textAlign: TextAlign.center,
@@ -206,22 +191,18 @@ class _UploadBookScreenState extends State<UploadBookScreen> {
                 const SizedBox(height: 4),
                 Text(
                   'Tamanho: ${_getFileSizeString(_selectedFile!.lengthSync())}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.grey[600],
-                  ),
+                  style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ] else ...[
                 Text(
                   'Selecione um arquivo PDF ou EPUB',
-                  style: Theme.of(context).textTheme.bodyMedium,
+                  style: Theme.of(context).textTheme.bodyLarge,
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Tamanho máximo: ${AppConstants.maxFileSize ~/ (1024 * 1024)}MB',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.grey[600],
-                  ),
+                  style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ],
               
@@ -244,15 +225,15 @@ class _UploadBookScreenState extends State<UploadBookScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Rótulo de texto com a nova fonte
         Text(
           'Categoria *',
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-            fontWeight: FontWeight.w500,
-          ),
+          style: _getLabelStyle(context),
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
           value: _selectedCategory,
+          // Decoração usa o tema (fundo cinza)
           decoration: const InputDecoration(
             border: OutlineInputBorder(),
           ),
@@ -279,6 +260,41 @@ class _UploadBookScreenState extends State<UploadBookScreen> {
       ],
     );
   }
+
+  // Widget de erro (usa o mesmo estilo do login)
+  Widget _buildErrorMessage(String message, VoidCallback onClear) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.red.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.red.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.error_outline,
+            color: Colors.red[700],
+            size: 20,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Colors.red[800],
+              ),
+            ),
+          ),
+          IconButton(
+            onPressed: onClear,
+            icon: Icon(Icons.close, size: 20, color: Colors.red[700]),
+          ),
+        ],
+      ),
+    );
+  }
+
 
   Future<void> _pickFile() async {
     try {

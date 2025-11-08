@@ -67,10 +67,11 @@ class BibliotecaDigitalApp extends StatelessWidget {
             title: AppConstants.appName,
             debugShowCheckedModeBanner: false,
             
-            // Configuração de tema
-            theme: AppThemes.lightTheme,
-            darkTheme: AppThemes.darkTheme,
-            themeMode: themeProvider.themeMode,
+            // --- INÍCIO DA CORREÇÃO ---
+            theme: AppThemes.mainTheme,      // Alterado de lightTheme
+            darkTheme: AppThemes.mainTheme,  // Alterado de darkTheme
+            themeMode: ThemeMode.light,    // Força o modo claro (novo design)
+            // --- FIM DA CORREÇÃO ---
             
             // Configuração de rotas
             initialRoute: _getInitialRoute(context),
